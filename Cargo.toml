@@ -1,0 +1,14 @@
+[package]
+name = "mcstructs"
+version = "0.1.0"
+description = "A Rust crate and NPM package for manipulating Minecraft Bedrock structures"
+edition = "2024"
+
+[[bin]]
+name = "nbt"
+path = "src/nbt.rs"
+[[bin]]
+name = "lib_test"
+path = "src/test.rs"
+
+[dependencies]
