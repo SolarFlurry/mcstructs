@@ -6,7 +6,7 @@ edition = "2024"
 
 [[bin]]
 name = "nbt"
-path = "src/nbt.rs"
+path = "src/nbt_viewer.rs"
 [[bin]]
 name = "lib_test"
 path = "src/test.rs"

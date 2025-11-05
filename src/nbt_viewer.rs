@@ -1,7 +1,7 @@
 use std::{
     env::args,
     fs::File,
-    io::{self, Error, ErrorKind, Read},
+    io::{self, Error, ErrorKind, Read, Seek, SeekFrom},
 };
 
 fn next_byte(file: &mut File) -> io::Result<u8> {
@@ -190,20 +190,20 @@ fn main() -> io::Result<()> {
     if let Some(path) = args.get(1) {
         let mut file = File::open(path)?;
 
-        /*let header = i32::from_le_bytes([
+        let header = i32::from_le_bytes([
             next_byte(&mut file)?,
             next_byte(&mut file)?,
             next_byte(&mut file)?,
             next_byte(&mut file)?,
         ]);
-		if header == 3 {
+		if header == 10 {
 			next_byte(&mut file)?;
 			next_byte(&mut file)?;
 			next_byte(&mut file)?;
 			next_byte(&mut file)?;
 		} else {
 			file.seek(SeekFrom::Current(-4))?;
-		};*/
+		};
 
         loop {
             let tag = next_byte(&mut file)?;
@@ -216,6 +216,7 @@ fn main() -> io::Result<()> {
                     return Err(error);
                 }
             }
+            file.seek(SeekFrom::Current(-1))?;
         }
     } else {
         println!("Requires 1 path argument");

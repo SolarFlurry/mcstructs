@@ -23,13 +23,13 @@ pub struct BlockType {
 }
 
 impl BlockType {
-	pub fn new(namespace: String) -> Self {
-		BlockType {namespace, states: vec![]}
+	pub fn new(namespace: &str) -> Self {
+		BlockType {namespace: namespace.to_string(), states: vec![]}
 	}
-	pub fn set_state (mut self, state_name: &String, state: &BlockState) -> Self {
+	pub fn set_state (mut self, state_name: &str, state: &BlockState) -> Self {
 		for (name, value) in &mut self.states {
 			if name == state_name {
-				*name = state_name.clone();
+				*name = state_name.to_string();
 				*value = state.clone();
 			}
 		}

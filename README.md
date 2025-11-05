@@ -11,7 +11,7 @@ fn main () -> io::Result<()> {
 	let structure = MCStructure::new(Vec3::<i32>::new(2, 2, 2));
 
 	structure.setblock(Vec3::<i32>::_000, 
-		BlockType::new("minecraft:grass_block".to_string())
+		BlockType::new("minecraft:grass_block")
 	);
 
 	let mut file = File::create("example.mcstructure")?;
