@@ -1,6 +1,6 @@
 {
   "name": "mcstructs",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A Rust crate and NPM package used for manipulating Minecraft Bedrock Edition structures and `.mcstructure` files.",
   "main": "index.js",
   "scripts": {
@@ -11,14 +11,14 @@
     "url": "git+https://github.com/SolarFlurry/mcstructs.git"
   },
   "files": [
-    "index.js",
-    "index.d.ts",
-    "pkg/*/**"
+    "/index.js",
+    "/index.d.ts",
+    "/pkg/*"
   ],
   "keywords": [],
   "author": "SolarFlurry",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "types": "./index.d.ts",
   "bugs": {
     "url": "https://github.com/SolarFlurry/mcstructs/issues"

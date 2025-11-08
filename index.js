@@ -1,4 +1,4 @@
-import * as mcstructs from "./pkg/mcstructs";
+import * as mcstructs from "./pkg/mcstructs.js";
 
 export class Vector3 {
 	#state;
@@ -39,7 +39,7 @@ export class MCStructure {
 		this.#state = mcstructs.mcstructure_new(size._getInternalState());
 	}
 	setBlock(loc, block) {
-		mcstructs.mcstructure_setblock(this.#state, loc._getInternalState(), block._getInternalState());
+		this.#state = mcstructs.mcstructure_setblock(this.#state, loc._getInternalState(), block._getInternalState());
 	}
 	asBytes() {
 		return mcstructs.mcstructure_as_bytes(this.#state);

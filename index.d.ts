@@ -12,12 +12,12 @@ export class BlockType {
 
 export class MCStructure {
 	constructor(size: Vector3);
-	setBlock(loc: Vector3, block: BlockType);
+	setBlock(loc: Vector3, block: BlockType): void;
 	asBytes(): number[];
 }
 
 export class BlockState {
-	static String(string: string);
-	static Int(int: number);
-	static Bool(bool: boolean | number);
+	static String(string: string): any;
+	static Int(int: number): any;
+	static Bool(bool: boolean | number): any;
 }
