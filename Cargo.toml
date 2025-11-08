@@ -1,7 +1,7 @@
 [package]
 name = "mcstructs"
 version = "0.1.0"
-description = "A Rust crate and NPM package for manipulating Minecraft Bedrock structures"
+description = "A Rust crate and NPM package for manipulating Minecraft Bedrock structures and `.mcstructure` files."
 edition = "2024"
 
 [[bin]]

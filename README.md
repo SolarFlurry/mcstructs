@@ -26,4 +26,4 @@ fn main () -> io::Result<()> {
 
 ```
 
-In the future, a Javascript wrapper *may* be created.
+There is an experimental JavaScript binding and wrapper in the branch `js-bindings`
