@@ -57,53 +57,70 @@ impl MCStructure {
 
         // block_indices
         compound.data.add_tag(
-            "block_indices",
-            TagData::List(
-                TagKind::List,
-                2,
-                vec![
-                    TagData::List(
-                        TagKind::Int,
-                        self.blocks.len() as u32,
-                        self.blocks
-                            .iter()
-                            .map(|value| TagData::Int(*value))
-                            .collect(),
-                    ),
-                    TagData::List(
-                        TagKind::Int,
-                        self.blocks.len() as u32,
-                        vec![TagData::Int(-1); self.blocks.len()],
-                    ),
-                ],
-            ),
-        );
-
-		// entities
-		compound.data.add_tag("entities", TagData::List(TagKind::Compound, 0, vec![]));
-
-        // palette
-        compound.data.add_tag(
-            "palette",
-            TagData::Compound(vec![NbtTag {
-                id: "default".to_string(),
-                data: TagData::Compound(vec![NbtTag {
-                    id: "block_palette".to_string(),
+            "structure",
+            TagData::Compound(vec![
+                NbtTag {
+                    id: "block_indices".to_string(),
                     data: TagData::List(
-                        TagKind::Compound,
-                        self.palette.len() as u32,
-                        self.palette.iter().map(|value| TagData::Compound(vec![
-							NbtTag {id: "name".to_string(), data: TagData::String(value.namespace.clone())}
-						])).collect(),
+                        TagKind::List,
+                        2,
+                        vec![
+                            TagData::List(
+                                TagKind::Int,
+                                self.blocks.len() as u32,
+                                self.blocks
+                                    .iter()
+                                    .map(|value| TagData::Int(*value))
+                                    .collect(),
+                            ),
+                            TagData::List(
+                                TagKind::Int,
+                                self.blocks.len() as u32,
+                                vec![TagData::Int(-1); self.blocks.len()],
+                            ),
+                        ],
                     ),
-                }, NbtTag {id: "block_position_data".to_string(), data: TagData::Compound(vec![])}]),
-            }]),
+                },
+                NbtTag {
+                    id: "entities".to_string(),
+                    data: TagData::List(TagKind::Compound, 0, vec![]),
+                },
+                NbtTag {
+                    id: "palette".to_string(),
+                    data: TagData::Compound(vec![NbtTag {
+                        id: "default".to_string(),
+                        data: TagData::Compound(vec![
+                            NbtTag {
+                                id: "block_palette".to_string(),
+                                data: TagData::List(
+                                    TagKind::Compound,
+                                    self.palette.len() as u32,
+                                    self.palette
+                                        .iter()
+                                        .map(|value| {
+                                            TagData::Compound(vec![NbtTag {
+                                                id: "name".to_string(),
+                                                data: TagData::String(value.namespace.clone()),
+                                            }])
+                                        })
+                                        .collect(),
+                                ),
+                            },
+                            NbtTag {
+                                id: "block_position_data".to_string(),
+                                data: TagData::Compound(vec![]),
+                            },
+                        ]),
+                    }]),
+                },
+            ]),
         );
-
+        
         // structure_world_origin
-		compound.data.add_tag("structure_world_origin", TagData::List(TagKind::Int, 3, vec![
-			TagData::Int(0); 3
-		]));
+        compound.data.add_tag(
+            "structure_world_origin",
+            TagData::List(TagKind::Int, 3, vec![TagData::Int(0); 3]),
+        );
 
         let nbt = NbtTree::new(vec![compound]);
 
