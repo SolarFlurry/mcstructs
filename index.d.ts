@@ -1,4 +1,4 @@
-export class Vector3 {
+export class Vec3 {
 	x: number;
 	y: number;
 	z: number;
@@ -11,13 +11,7 @@ export class BlockType {
 }
 
 export class MCStructure {
-	constructor(size: Vector3);
-	setBlock(loc: Vector3, block: BlockType): void;
-	asBytes(): number[];
-}
-
-export class BlockState {
-	static String(string: string): any;
-	static Int(int: number): any;
-	static Bool(bool: boolean | number): any;
+	constructor(size: Vec3);
+	setBlock(loc: Vec3, block: BlockType): void;
+	asBytes(): Int8Array;
 }

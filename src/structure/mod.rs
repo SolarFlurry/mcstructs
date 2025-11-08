@@ -6,7 +6,7 @@ use crate::{
     types::{BlockType, Vec3},
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MCStructure {
     size: Vec3<i32>,
     blocks: Vec<i32>,

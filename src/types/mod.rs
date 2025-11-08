@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Vec3<T> {
 	e: [T; 3],
 }
@@ -21,7 +21,7 @@ impl Vec3<i32> {
 	pub const _000: Vec3<i32> = Vec3 {e: [0, 0, 0]};
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct BlockType {
 	pub namespace: String,
 	pub states: Vec<(String, BlockState)>,
@@ -42,7 +42,7 @@ impl BlockType {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum BlockState {
 	String(String),
 	Int(i32),
