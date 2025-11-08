@@ -11,4 +11,10 @@ path = "src/nbt_viewer.rs"
 name = "lib_test"
 path = "src/test.rs"
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
+serde = {version = "1.0.228", features = ["derive"]}
+serde-wasm-bindgen = "0.6.5"
+wasm-bindgen = "0.2.105"

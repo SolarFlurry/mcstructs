@@ -1,5 +1,7 @@
+use serde::{Serialize, Deserialize};
+
 #[repr(u8)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum TagKind {
     End,
     Byte,
@@ -16,6 +18,7 @@ pub enum TagKind {
     LongArray,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct NbtTree {
     entries: Vec<NbtTag>,
 }
@@ -39,7 +42,7 @@ impl NbtTree {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct NbtTag {
     pub id: String,
     pub data: TagData,
@@ -56,7 +59,7 @@ impl NbtTag {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum TagData {
     End,
     Byte(i8),

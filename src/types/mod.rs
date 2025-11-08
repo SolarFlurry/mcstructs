@@ -1,3 +1,6 @@
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize)]
 pub struct Vec3<T> {
 	e: [T; 3],
 }
@@ -13,10 +16,12 @@ impl<T> Vec3<T> {
 	pub fn z (&self) -> &T { &self.e[2] }
 }
 
+
 impl Vec3<i32> {
 	pub const _000: Vec3<i32> = Vec3 {e: [0, 0, 0]};
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct BlockType {
 	pub namespace: String,
 	pub states: Vec<(String, BlockState)>,
@@ -37,7 +42,7 @@ impl BlockType {
 	}
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum BlockState {
 	String(String),
 	Int(i32),
