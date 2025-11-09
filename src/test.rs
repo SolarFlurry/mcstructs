@@ -1,6 +1,6 @@
-use std::{fs::File, io::{self, Write}};
+use std::{fs::{self, File}, io::{self, Write}};
 
-use mcstructs::{structure::MCStructure, types::{BlockState, BlockType, Vec3}};
+use mcstructs::{nbt::NbtTree, structure::MCStructure, types::{BlockState, BlockType, Vec3}};
 
 fn main () -> io::Result<()> {
 	let path = "generated.mcstructure";
@@ -19,6 +19,10 @@ fn main () -> io::Result<()> {
 
 	file.write_all(&data)?;
 	println!("Wrote {} bytes to '{}'", data.len(), path);
+
+	let bytes = fs::read(path)?;
+	let nbt = NbtTree::from_bytes(&bytes);
+	nbt.print();
 
 	Ok(())
 }
