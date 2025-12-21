@@ -1,3 +1,28 @@
+macro_rules! define_conversion_from_fn {
+    ($fn_name:ident, $type:ty, $size:literal) => {
+        pub fn $fn_name(&mut self) -> $type {
+            let bytes = self.next_bytes::<$size>();
+            if self.little_endian {
+                <$type>::from_le_bytes(bytes)
+            } else {
+                <$type>::from_be_bytes(bytes)
+            }
+        }
+    };
+}
+
+macro_rules! define_conversion_to_fn {
+    ($fn_name:ident, $type:ty, $size:literal) => {
+        pub fn $fn_name(&mut self, num: $type) {
+            if self.little_endian {
+                self.bytes.extend(<$type>::to_le_bytes(num))
+            } else {
+                self.bytes.extend(<$type>::to_be_bytes(num))
+            }
+        }
+    };
+}
+
 #[repr(u8)]
 #[derive(Clone, PartialEq, Debug)]
 pub enum TagKind {
@@ -14,6 +39,66 @@ pub enum TagKind {
     Compound,
     IntArray,
     LongArray,
+}
+
+pub struct NbtReader {
+    little_endian: bool,
+    bytes: Vec<u8>,
+    ptr: usize,
+}
+
+impl NbtReader {
+    pub fn read_all(&self) -> bool {
+        self.ptr >= self.bytes.len()
+    }
+    pub fn new(little_endian: bool, bytes: Vec<u8>) -> NbtReader {
+        NbtReader { little_endian, bytes, ptr: 0 }
+    }
+    define_conversion_from_fn!{u16_from_next_bytes, u16, 2}
+    define_conversion_from_fn!{u32_from_next_bytes, u32, 4}
+    define_conversion_from_fn!{i16_from_next_bytes, i16, 2}
+    define_conversion_from_fn!{i32_from_next_bytes, i32, 4}
+    define_conversion_from_fn!{i64_from_next_bytes, i64, 8}
+    define_conversion_from_fn!{f32_from_next_bytes, f32, 4}
+    define_conversion_from_fn!{f64_from_next_bytes, f64, 8}
+    pub fn next_byte(&mut self) -> u8 {
+        let byte = self.bytes[self.ptr];
+        self.ptr += 1;
+        byte
+    }
+    pub fn next_bytes<const N: usize>(&mut self) -> [u8; N] {
+        let mut bytes = [0u8; N];
+        for i in 0..N {
+            bytes[i] = self.next_byte();
+        }
+        bytes
+    }
+}
+
+pub struct NbtWriter {
+    little_endian: bool,
+    bytes: Vec<u8>,
+}
+
+impl NbtWriter {
+    pub fn new(little_endian: bool) -> NbtWriter {
+        NbtWriter { little_endian, bytes: vec![] }
+    }
+    define_conversion_to_fn!{u16_write_to_bytes, u16, 2}
+    define_conversion_to_fn!{u32_write_to_bytes, u32, 4}
+    define_conversion_to_fn!{i16_write_to_bytes, i16, 2}
+    define_conversion_to_fn!{i32_write_to_bytes, i32, 4}
+    define_conversion_to_fn!{i64_write_to_bytes, i64, 8}
+    define_conversion_to_fn!{f32_write_to_bytes, f32, 4}
+    define_conversion_to_fn!{f64_write_to_bytes, f64, 8}
+
+    fn write(&mut self, byte: u8) {
+        self.bytes.push(byte)
+    }
+
+    fn write_bytes(&mut self, bytes: &[u8]) {
+        self.bytes.extend_from_slice(bytes);
+    }
 }
 
 impl TagKind {
@@ -37,12 +122,6 @@ impl TagKind {
     }
 }
 
-fn next_byte(bytes: &[u8], ptr: &mut usize) -> u8 {
-    let byte = bytes[*ptr];
-    *ptr += 1;
-    byte
-}
-
 pub struct NbtTree {
     entries: Vec<NbtTag>,
 }
@@ -62,20 +141,21 @@ impl NbtTree {
             data,
         });
     }
-    pub fn as_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::<u8>::new();
+    pub fn as_bytes(&self, little_endian: bool) -> Vec<u8> {
+        let mut w = NbtWriter::new(little_endian);
+
         for tag in &self.entries {
-            bytes.extend(tag.as_bytes());
+            tag.as_bytes(&mut w);
         }
-        bytes
+        w.bytes
     }
-    pub fn from_bytes(bytes: &[u8]) -> NbtTree {
-        let mut ptr = 0;
+    pub fn from_bytes(little_endian: bool, bytes: Vec<u8>) -> NbtTree {
+        let mut r = NbtReader::new(little_endian, bytes);
         let mut tree = NbtTree::new(vec![]);
         loop {
-            let kind = TagKind::from_u8(next_byte(bytes, &mut ptr));
-            tree.entries.push(NbtTag::from_bytes(bytes, &mut ptr, &kind));
-            if ptr >= bytes.len() {
+            let kind = TagKind::from_u8(r.next_byte());
+            tree.entries.push(NbtTag::from_bytes(&mut r, &kind));
+            if r.read_all() {
                 break tree;
             }
         }
@@ -92,21 +172,19 @@ impl NbtTag {
         print!("{}{}: ", "  ".repeat(indent), self.id);
         self.data.print(indent);
     }
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self, w: &mut NbtWriter) {
         let mut bytes = Vec::<u8>::new();
-        bytes.push(self.data.kind() as u8);
-        bytes.extend(u16::to_le_bytes(self.id.len() as u16));
-        bytes.extend_from_slice(self.id.as_bytes());
-        bytes.extend(self.data.as_bytes());
-
-        bytes
+        w.write(self.data.kind() as u8);
+        w.u16_write_to_bytes(self.id.len() as u16);
+        w.write_bytes(self.id.as_bytes());
+        self.data.as_bytes(w);
     }
-    pub fn from_bytes(bytes: &[u8], ptr: &mut usize, kind: &TagKind) -> NbtTag {
-        let id_size = u16::from_le_bytes([next_byte(bytes, ptr), next_byte(bytes, ptr)]);
+    pub fn from_bytes(r: &mut NbtReader, kind: &TagKind) -> NbtTag {
+        let id_size = r.u16_from_next_bytes();
 
         let mut id = Vec::<u8>::new();
         for _i in 0..id_size {
-            id.push(next_byte(bytes, ptr));
+            id.push(r.next_byte());
         }
         let id = String::from_utf8(id);
         match id {
@@ -114,7 +192,7 @@ impl NbtTag {
             Ok(id) => {
                 return NbtTag {
                     id,
-                    data: TagData::from_bytes(bytes, ptr, &kind),
+                    data: TagData::from_bytes(r, &kind),
                 };
             }
         };
@@ -147,6 +225,18 @@ impl TagData {
             TagData::Long(long) => println!("\x1b[36mTAG_Long\x1b[0m = \x1b[33m{}\x1b[0m", long),
             TagData::Float(float) => println!("\x1b[36mTAG_Float\x1b[0m = \x1b[33m{}\x1b[0m", float),
             TagData::Double(double) => println!("\x1b[36mTAG_Double\x1b[0m = \x1b[33m{}\x1b[0m", double),
+            TagData::ByteArray(_size, list) => {
+                if list.len() == 0 {
+                    println!("\x1b[36mTAG_ByteArray\x1b[0m = []");
+                    return;
+                }
+                println!("\x1b[36mTAG_ByteArray\x1b[0m = [");
+                for data in list {
+                    print!("{}", "  ".repeat(indent + 1));
+                    println!("\x1b[33m{}\x1b[0m", data)
+                }
+                println!("{}]", "  ".repeat(indent));
+            }
             TagData::String(string) => println!("\x1b[36mTAG_String\x1b[0m = \x1b[32m'{}'\x1b[0m", string),
             TagData::List(_kind, _size, list) => {
                 if list.len() == 0 {
@@ -170,6 +260,18 @@ impl TagData {
                     tag.print(indent + 1);
                 }
                 println!("{}}}", "  ".repeat(indent));
+            }
+            TagData::IntArray(_size, list) => {
+                if list.len() == 0 {
+                    println!("\x1b[36mTAG_IntArray\x1b[0m = []");
+                    return;
+                }
+                println!("\x1b[36mTAG_IntArray\x1b[0m = [");
+                for data in list {
+                    print!("{}", "  ".repeat(indent + 1));
+                    println!("\x1b[33m{}\x1b[0m", data)
+                }
+                println!("{}]", "  ".repeat(indent));
             }
             _ => println!("Unknown Tag")
         }
@@ -201,89 +303,63 @@ impl TagData {
             panic!("cannot use 'add_tag' on a non-compound tag");
         }
     }
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self, w: &mut NbtWriter) {
         match self {
-            TagData::Byte(byte) => i8::to_be_bytes(*byte).to_vec(),
-            TagData::Short(short) => i16::to_le_bytes(*short).to_vec(),
-            TagData::Int(int) => i32::to_le_bytes(*int).to_vec(),
-            TagData::Float(float) => f32::to_le_bytes(*float).to_vec(),
-            TagData::Double(double) => f64::to_le_bytes(*double).to_vec(),
+            TagData::Byte(byte) => w.write_bytes(&i8::to_be_bytes(*byte)),
+            TagData::Short(short) => w.i16_write_to_bytes(*short),
+            TagData::Int(int) => w.i32_write_to_bytes(*int),
+            TagData::Float(float) => w.f32_write_to_bytes(*float),
+            TagData::Double(double) => w.f64_write_to_bytes(*double),
             TagData::String(string) => {
-                let mut bytes = Vec::<u8>::new();
-                bytes.extend(u16::to_le_bytes(string.len() as u16));
-                bytes.extend(string.as_bytes().to_vec());
-                bytes
+                w.u16_write_to_bytes(string.len() as u16);
+                w.write_bytes(string.as_bytes());
             }
             TagData::List(tag_type, size, list) => {
-                let mut bytes = Vec::<u8>::new();
-                bytes.push(tag_type.clone() as u8);
-                bytes.extend(u32::to_le_bytes(*size));
+                w.write(tag_type.clone() as u8);
+                w.u32_write_to_bytes(*size);
                 for i in 0..*size {
                     let data = &list[i as usize];
                     if data.kind() != *tag_type {
                         panic!("Type of tag does not match List tag");
                     }
-                    bytes.extend(data.as_bytes());
+                    data.as_bytes(w);
                 }
-                bytes
             }
             TagData::Compound(compound) => {
-                let mut bytes = Vec::<u8>::new();
                 for tag in compound {
-                    bytes.extend(tag.as_bytes());
+                    tag.as_bytes(w);
                 }
-                bytes.push(0);
-                bytes
+                w.write(0);
             }
             _ => panic!("Unknown tag"),
         }
     }
-    pub fn from_bytes(bytes: &[u8], ptr: &mut usize, kind: &TagKind) -> TagData {
+    pub fn from_bytes(r: &mut NbtReader, kind: &TagKind) -> TagData {
         match kind {
-            TagKind::Byte => TagData::Byte(i8::from_le_bytes([next_byte(bytes, ptr)])),
-            TagKind::Short => TagData::Short(i16::from_le_bytes([
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-            ])),
-            TagKind::Int => TagData::Int(i32::from_le_bytes([
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-            ])),
-            TagKind::Long => TagData::Long(i64::from_le_bytes([
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-            ])),
-            TagKind::Float => TagData::Float(f32::from_le_bytes([
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-            ])),
-            TagKind::Double => TagData::Double(f64::from_le_bytes([
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-                next_byte(bytes, ptr),
-            ])),
+            TagKind::Byte => TagData::Byte(i8::from_le_bytes([r.next_byte()])),
+            TagKind::Short => TagData::Short(r.i16_from_next_bytes()),
+            TagKind::Int => TagData::Int(r.i32_from_next_bytes()),
+            TagKind::Long => TagData::Long(r.i64_from_next_bytes()),
+            TagKind::Float => TagData::Float(r.f32_from_next_bytes()),
+            TagKind::Double => TagData::Double(r.f64_from_next_bytes()),
+            TagKind::ByteArray => {
+                let size = r.i32_from_next_bytes();
+
+                let mut data = Vec::<i8>::new();
+
+                for _i in 0..size {
+                    data.push(i8::from_le_bytes([r.next_byte()]));
+                }
+
+                TagData::ByteArray(size, data)
+            }
             TagKind::String => {
-                let size = u16::from_le_bytes([next_byte(bytes, ptr), next_byte(bytes, ptr)]);
+                let size = r.u16_from_next_bytes();
 
                 let mut data: Vec<u8> = vec![];
 
                 for _i in 0..size {
-                    data.push(next_byte(bytes, ptr));
+                    data.push(r.next_byte());
                 }
 
                 let string = String::from_utf8(data);
@@ -293,18 +369,13 @@ impl TagData {
                 }
             }
             TagKind::List => {
-                let tag = TagKind::from_u8(next_byte(bytes, ptr));
-                let size = u32::from_le_bytes([
-                    next_byte(bytes, ptr),
-                    next_byte(bytes, ptr),
-                    next_byte(bytes, ptr),
-                    next_byte(bytes, ptr),
-                ]);
+                let tag = TagKind::from_u8(r.next_byte());
+                let size = r.u32_from_next_bytes();
 
                 let mut data = Vec::<TagData>::new();
 
                 for _i in 0..size {
-                    data.push(TagData::from_bytes(bytes, ptr, &tag))
+                    data.push(TagData::from_bytes(r, &tag))
                 };
 
                 TagData::List(tag, size, data)
@@ -312,12 +383,23 @@ impl TagData {
             TagKind::Compound => {
                 let mut data = Vec::<NbtTag>::new();
                 loop {
-                    let kind = TagKind::from_u8(next_byte(bytes, ptr));
+                    let kind = TagKind::from_u8(r.next_byte());
                     if let TagKind::End = kind {
                         break TagData::Compound(data);
                     }
-                    data.push(NbtTag::from_bytes(bytes, ptr, &kind))
+                    data.push(NbtTag::from_bytes(r, &kind))
                 }
+            }
+            TagKind::IntArray => {
+                let size = r.i32_from_next_bytes();
+
+                let mut data = Vec::<i32>::new();
+
+                for _i in 0..size {
+                    data.push(r.i32_from_next_bytes())
+                };
+
+                TagData::IntArray(size, data)
             }
             _ => {
                 panic!("Unknown tag 0x{:02X}", kind.clone() as u8);

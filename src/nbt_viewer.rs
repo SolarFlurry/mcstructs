@@ -21,7 +21,7 @@ fn main() -> io::Result<()> {
             }
             bytes.extend(&buffer);
         }
-	    let nbt = NbtTree::from_bytes(&bytes);
+	    let nbt = NbtTree::from_bytes(args.get(2).is_some(), bytes);
 	    nbt.print();
     } else {
         println!("Requires 1 path argument");

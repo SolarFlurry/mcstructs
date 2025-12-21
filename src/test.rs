@@ -21,7 +21,7 @@ fn main () -> io::Result<()> {
 	println!("Wrote {} bytes to '{}'", data.len(), path);
 
 	let bytes = fs::read(path)?;
-	let nbt = NbtTree::from_bytes(&bytes);
+	let nbt = NbtTree::from_bytes(true, bytes);
 	nbt.print();
 
 	Ok(())

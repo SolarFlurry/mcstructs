@@ -124,6 +124,6 @@ impl MCStructure {
 
         let nbt = NbtTree::new(vec![compound]);
 
-        nbt.as_bytes()
+        nbt.as_bytes(true)
     }
 }
