@@ -3,7 +3,7 @@ import * as mcstructs from "./pkg/mcstructs.js";
 export class Vec3 {
 	#e
 	constructor(x, y, z) {
-		this.#e = [x, y, z]
+		this.#e = new Int32Array([x, y, z])
 	}
 	get x () {return this.#e[0]}
 	get y () {return this.#e[1]}

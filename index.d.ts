@@ -1,9 +1,8 @@
 export class Vec3<T> {
-	private #e: [T, T, T]
-	x: T;
-	y: T;
-	z: T;
-	constructor(x: T, y: T, z: T);
+	x: number;
+	y: number;
+	z: number;
+	constructor(x: number, y: number, z: number);
 }
 
 export class BlockType {
