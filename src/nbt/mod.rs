@@ -173,7 +173,6 @@ impl NbtTag {
         self.data.print(indent);
     }
     pub fn as_bytes(&self, w: &mut NbtWriter) {
-        let mut bytes = Vec::<u8>::new();
         w.write(self.data.kind() as u8);
         w.u16_write_to_bytes(self.id.len() as u16);
         w.write_bytes(self.id.as_bytes());

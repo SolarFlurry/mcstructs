@@ -2,13 +2,14 @@ use core::panic;
 
 use crate::{
     nbt::{NbtTag, NbtTree, TagData, TagKind},
-    types::{BlockType, Vec3},
+    types::{BlockState, BlockType, Vec3},
 };
 
 pub struct MCStructure {
     size: Vec3<i32>,
     blocks: Vec<i32>,
     palette: Vec<BlockType>,
+    pub(in crate) block_position_data: Vec<(u32, TagData)>
 }
 
 impl MCStructure {
@@ -21,6 +22,7 @@ impl MCStructure {
             size,
             blocks,
             palette: vec![],
+            block_position_data: vec![]
         }
     }
     pub fn setblock(&mut self, loc: Vec3<i32>, block: BlockType) {
@@ -98,24 +100,59 @@ impl MCStructure {
                                     self.palette
                                         .iter()
                                         .map(|value| {
-                                            TagData::Compound(vec![NbtTag {
-                                                id: "name".to_string(),
-                                                data: TagData::String(value.namespace.clone()),
-                                            }])
+                                            TagData::Compound(vec![
+                                                NbtTag {
+                                                    id: "name".to_string(),
+                                                    data: TagData::String(value.type_id.clone()),
+                                                },
+                                                NbtTag {
+                                                    id: "states".to_string(),
+                                                    data: TagData::Compound(
+                                                        value
+                                                            .states
+                                                            .iter()
+                                                            .map(|state| NbtTag {
+                                                                id: state.0.clone(),
+                                                                data: match &state.1 {
+                                                                    BlockState::String(string) => {
+                                                                        TagData::String(
+                                                                            string.to_string(),
+                                                                        )
+                                                                    }
+                                                                    BlockState::Int(int) => {
+                                                                        TagData::Int(*int)
+                                                                    }
+                                                                    BlockState::Bool(b) => {
+                                                                        TagData::Byte(*b as i8)
+                                                                    }
+                                                                },
+                                                            })
+                                                            .collect(),
+                                                    ),
+                                                },
+                                            ])
                                         })
                                         .collect(),
                                 ),
                             },
                             NbtTag {
                                 id: "block_position_data".to_string(),
-                                data: TagData::Compound(vec![]),
+                                data: TagData::Compound(self.block_position_data.iter().map(|value| NbtTag {
+                                    id: value.0.to_string(),
+                                    data: TagData::Compound(vec![
+                                        NbtTag {
+                                            id: "block_entity_data".to_string(),
+                                            data: value.1.clone()
+                                        }
+                                    ])
+                                }).collect()),
                             },
                         ]),
                     }]),
                 },
             ]),
         );
-        
+
         // structure_world_origin
         compound.data.add_tag(
             "structure_world_origin",
