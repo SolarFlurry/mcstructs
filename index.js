@@ -3,7 +3,7 @@ import * as mcstructs from "./pkg/mcstructs.js";
 export class Vec3 {
 	#e
 	constructor(x, y, z) {
-		this.#e = new Int32Array([x, y, z])
+		this.#e = [x, y, z]
 	}
 	get x () {return this.#e[0]}
 	get y () {return this.#e[1]}
@@ -26,7 +26,7 @@ export class BlockType {
 	}
 
 	setState(stateName, state) {
-		this.#state = mcstructs.blocktype_set_state(this.#state, stateName, state);
+		this.#state = mcstructs.blocktype_set_state(this.#state, stateName, state._toJsValue());
 		return this;
 	}
 }
@@ -44,23 +44,26 @@ export class MCStructure {
 	}
 }
 
-export const BlockState = {
-	String: (string) => {
+export class BlockState {
+	constructor(tag, contents) {
+		this.tag = tag;
+		this.contents = contents
+	}
+	tag;
+	contents;
+	static String (string) {
+		return new BlockState("String", string);
+	}
+	static Int (i32) {
+		return new BlockState("Int", i32);
+	}
+	static Bool (bool) {
+		return new BlockState("Bool", bool ? 1 : 0);
+	}
+	_toJsValue() {
 		return {
-			tag: "String",
-			contents: string
-		}
-	},
-	Int: (int) => {
-		return {
-			tag: "Int",
-			contents: int
-		}
-	},
-	Bool: (bool) => {
-		return {
-			tag: "Bool",
-			contents: typeof bool === "boolean" ? (bool ? 1 : 0) : bool
+			tag: this.tag,
+			contents: this.contents
 		}
 	}
 }
