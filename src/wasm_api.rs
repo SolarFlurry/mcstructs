@@ -1,5 +1,13 @@
-use serde_wasm_bindgen;
+//use serde_wasm_bindgen;
 use wasm_bindgen::{JsValue, prelude::wasm_bindgen};
+
+#[wasm_bindgen]
+extern "C" {
+	#[wasm_bindgen(js_namespace = console)]
+	fn log(s: &str);
+	#[wasm_bindgen(js_namespace = console, js_name = log)]
+	fn log_jsValue(s: &JsValue);
+}
 
 use crate::{structure::MCStructure, types::{BlockState, BlockType}};
 use crate::types::Vec3;
@@ -25,12 +33,10 @@ impl WASM_MCStructure {
 		let structure = MCStructure::new(size);
 		Ok(WASM_MCStructure {mcstructure: structure})
 	}
-	pub fn setblock(&mut self, loc: &[i32], block: JsValue) -> Result<(), JsValue> {
+	pub fn setblock(&mut self, loc: &[i32], block: WASM_BlockType) -> Result<(), JsValue> {
 		let loc = vec3_from_slice(loc);
-		let block: BlockType =
-			serde_wasm_bindgen::from_value(block).map_err(|e| JsValue::from_str(&e.to_string()))?;
 		
-		self.mcstructure.setblock(loc, block);
+		self.mcstructure.setblock(loc, block.blocktype.expect("unreachable code"));
 		Ok(())
 	}
 	pub fn as_bytes(&self) -> Vec<u8> {
@@ -38,21 +44,27 @@ impl WASM_MCStructure {
 	}
 }
 
-// BlockType
 #[wasm_bindgen]
-pub fn blocktype_new (namespace: &str) -> Result<JsValue, JsValue> {
-	serde_wasm_bindgen::to_value(&BlockType::new(namespace)).map_err(|e| JsValue::from_str(&e.to_string()))
+#[allow(non_camel_case_types)]
+pub struct WASM_BlockType {
+	blocktype: Option<BlockType>
 }
 
 #[wasm_bindgen]
-pub fn blocktype_set_state (self_js: JsValue, state_name: &str, state_js: JsValue) -> Result<JsValue, JsValue> {
-	let object: BlockType =
-		serde_wasm_bindgen::from_value(self_js).map_err(|e| JsValue::from_str(&e.to_string()))?;
+impl WASM_BlockType {
+	pub fn new(namespace: &str) -> WASM_BlockType {
+		WASM_BlockType {
+			blocktype: Some(BlockType::new(namespace))
+		}
+	}
+	pub fn set_state(&mut self, state_name: &str, state_js: JsValue) -> Result<(), JsValue> {
+		let state: BlockState =
+			serde_wasm_bindgen::from_value(state_js).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-	let state: BlockState =
-		serde_wasm_bindgen::from_value(state_js).map_err(|e| JsValue::from_str(&e.to_string()))?;
-	
-	let object = object.set_state(state_name, &state);
+		let inner = self.blocktype.take().unwrap();
 
-	serde_wasm_bindgen::to_value(&object).map_err(|e| JsValue::from_str(&e.to_string()))
+		self.blocktype = Some(inner.set_state(state_name, &state));
+
+		Ok(())
+	}
 }

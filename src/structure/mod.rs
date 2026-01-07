@@ -1,12 +1,11 @@
 use core::panic;
-use serde::{Serialize, Deserialize};
 
 use crate::{
     nbt::{NbtTag, NbtTree, TagData, TagKind},
     types::{BlockType, Vec3},
 };
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct MCStructure {
     size: Vec3<i32>,
     blocks: Vec<i32>,

@@ -21,7 +21,7 @@ impl Vec3<i32> {
 	pub const _000: Vec3<i32> = Vec3 {e: [0, 0, 0]};
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct BlockType {
 	pub namespace: String,
 	pub states: Vec<(String, BlockState)>,
@@ -38,11 +38,13 @@ impl BlockType {
 				*value = state.clone();
 			}
 		}
+
 		self
 	}
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(tag = "tag", content = "contents")]
 pub enum BlockState {
 	String(String),
 	Int(i32),

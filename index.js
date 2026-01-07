@@ -18,16 +18,18 @@ export class BlockType {
 	#state;
 
 	constructor (namespace) {
-		this.#state = mcstructs.blocktype_new(namespace);
-	}
-
-	_getInternalState() {
-		return this.#state;
+		this.#state = mcstructs.WASM_BlockType.new(namespace)
 	}
 
 	setState(stateName, state) {
-		this.#state = mcstructs.blocktype_set_state(this.#state, stateName, state._toJsValue());
+		console.log(this.#state)
+		console.log(state._toJsValue())
+		this.#state.set_state(stateName, state._toJsValue());
 		return this;
+	}
+
+	_getInternalState() {
+		return this.#state
 	}
 }
 
