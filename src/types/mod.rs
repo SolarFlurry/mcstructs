@@ -1,5 +1,8 @@
 use crate::{nbt::{TagData, TagKind, TagList}, structure::MCStructure};
 
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Vec3<T> {
 	e: [T; 3],
 }
@@ -15,11 +18,12 @@ impl<T> Vec3<T> {
 	pub fn z (&self) -> &T { &self.e[2] }
 }
 
+
 impl Vec3<i32> {
 	pub const _000: Vec3<i32> = Vec3 {e: [0, 0, 0]};
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BlockType {
 	pub type_id: String,
 	pub states: Vec<(String, BlockState)>,
@@ -107,7 +111,8 @@ impl<'a> Block<'a> {
 	}
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(tag = "tag", content = "contents")]
 pub enum BlockState {
 	String(String),
 	Int(i32),

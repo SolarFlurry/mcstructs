@@ -5,6 +5,7 @@ use crate::{
     types::{Block, BlockState, BlockType, Vec3},
 };
 
+#[derive(Debug)]
 pub struct MCStructure {
     size: Vec3<i32>,
     blocks: Vec<i32>,
@@ -147,7 +148,7 @@ impl MCStructure {
                 ),
             ])),
         );
-
+        
         // structure_world_origin
         compound.add_tag(
             "structure_world_origin",
