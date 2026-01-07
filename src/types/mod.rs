@@ -1,4 +1,4 @@
-use crate::structure::MCStructure;
+use crate::{nbt::{TagData, TagKind, TagList}, structure::MCStructure};
 
 pub struct Vec3<T> {
 	e: [T; 3],
@@ -19,6 +19,7 @@ impl Vec3<i32> {
 	pub const _000: Vec3<i32> = Vec3 {e: [0, 0, 0]};
 }
 
+#[derive(Clone)]
 pub struct BlockType {
 	pub type_id: String,
 	pub states: Vec<(String, BlockState)>,
@@ -47,26 +48,60 @@ impl BlockType {
 	}
 }
 
-struct Block<'a> {
+pub struct Block<'a> {
 	permutation: BlockType,
-	structure: &'a MCStructure,
+	structure: &'a mut MCStructure,
 	index: u32,
 }
 
 impl<'a> Block<'a> {
-	fn set_item_slot (mut self, item_type_id: &str, count: u8) -> Self {
+	pub fn new(permutation: BlockType, index: u32, structure: &'a mut MCStructure) -> Block<'a> {
+		Block {
+			permutation,
+			index,
+			structure,
+		}
+	}
+	pub fn set_item_slot (self, slot: u8, item_type_id: &str, count: u8) -> Self {
 		if !self.permutation.is_container() {
 			panic!("the permutation is not a container");
 		}
 		let mut index_in_data = None::<usize>;
-		for (i, (j, data)) in self.structure.block_position_data.iter().enumerate() {
+		for (i, (j, _data)) in self.structure.block_position_data.iter().enumerate() {
 			if *j == self.index {
 				index_in_data = Some(i);
 				break;
 			}
 		}
 		if let Some(index_in_data) = index_in_data {
+			let actual_data = &mut self.structure.block_position_data[index_in_data].1;
+			let items: &mut TagData;
+			if let Some(get) = actual_data.get_tag("Items") {
+				items = get;
+			} else {
+				actual_data.add_tag("Items", TagData::List(TagKind::Compound, 0, vec![]));
+				items = actual_data.get_tag("Items").expect("unreachable code");
+			}
 
+			if let TagData::List(_kind, size, list) = items {
+				list.push(TagData::Compound(TagList::from(vec![
+					(
+						"Count".to_string(),
+						TagData::Byte(count as i8)
+					),
+					(
+						"Name".to_string(),
+						TagData::String(item_type_id.to_string())
+					),
+					(
+						"Slot".to_string(),
+						TagData::Byte(slot as i8)
+					)
+				])));
+				*size += 1;
+			}
+		} else {
+			panic!("unreachable code")
 		}
 		self
 	}
