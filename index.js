@@ -22,8 +22,6 @@ export class BlockType {
 	}
 
 	setState(stateName, state) {
-		console.log(this.#state)
-		console.log(state._toJsValue())
 		this.#state.set_state(stateName, state._toJsValue());
 		return this;
 	}
