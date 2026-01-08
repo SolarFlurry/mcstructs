@@ -7,7 +7,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct MCStructure {
-    size: Vec3<i32>,
+    pub(in crate) size: Vec3<i32>,
     blocks: Vec<i32>,
     palette: Vec<BlockType>,
     pub(in crate) block_position_data: Vec<(u32, TagData)>

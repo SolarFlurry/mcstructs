@@ -12,8 +12,13 @@ export class BlockType {
 
 export class MCStructure {
 	constructor(size: Vec3);
-	setBlock(loc: Vec3, block: BlockType): void;
+	setBlock(loc: Vec3, block: BlockType): Block;
 	asBytes(): Int8Array;
+}
+
+class Block {
+	private constructor();
+	setItemSlot(slot: number, itemTypeId: string, count: number);
 }
 
 export class BlockState {

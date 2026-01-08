@@ -14,6 +14,10 @@ fn main () -> io::Result<()> {
 		.set_state("output_subtract_bit", &BlockState::Bool(1))
 	);
 
+	structure.setblock(Vec3::new(0, 1, 0),
+		BlockType::new("minecraft:barrel")
+	).set_item_slot(0, "minecraft:redstone", 32);
+
 	let mut file = File::create(path)?;
 	let data = structure.as_bytes();
 

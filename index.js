@@ -37,10 +37,21 @@ export class MCStructure {
 		this.#state = mcstructs.WASM_MCStructure.new(size._int32array())
 	}
 	setBlock(loc, block) {
-		this.#state.setblock(loc._int32array(), block._getInternalState());
+		return new Block(this.#state.setblock(loc._int32array(), block._getInternalState()));
 	}
 	asBytes() {
 		return this.#state.as_bytes()
+	}
+}
+
+class Block {
+	#state;
+	constructor(block) {
+		this.#state = block;
+	}
+	setItemSlot(slot, itemTypeId, count) {
+		this.#state.set_item_slot(slot, itemTypeId, count)
+		return this;
 	}
 }
 

@@ -186,6 +186,12 @@ function getArrayU8FromWasm0(ptr, len) {
     return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len);
 }
 
+function _assertClass(instance, klass) {
+    if (!(instance instanceof klass)) {
+        throw new Error(`expected instance of ${klass.name}`);
+    }
+}
+
 function takeFromExternrefTable0(idx) {
     const value = wasm.__wbindgen_externrefs.get(idx);
     wasm.__externref_table_dealloc(idx);
@@ -208,11 +214,56 @@ function passArray32ToWasm0(arg, malloc) {
     return ptr;
 }
 
-function _assertClass(instance, klass) {
-    if (!(instance instanceof klass)) {
-        throw new Error(`expected instance of ${klass.name}`);
+const WASM_BlockFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_wasm_block_free(ptr >>> 0, 1));
+
+export class WASM_Block {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(WASM_Block.prototype);
+        obj.__wbg_ptr = ptr;
+        WASM_BlockFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WASM_BlockFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_wasm_block_free(ptr, 0);
+    }
+    /**
+     * @param {number} slot
+     * @param {string} item_type_id
+     * @param {number} count
+     */
+    set_item_slot(slot, item_type_id, count) {
+        const ptr0 = passStringToWasm0(item_type_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.wasm_block_set_item_slot(this.__wbg_ptr, slot, ptr0, len0, count);
+    }
+    /**
+     * @param {WASM_BlockType} permutation
+     * @param {number} index
+     * @param {WASM_MCStructure} structure
+     * @returns {WASM_Block}
+     */
+    static new(permutation, index, structure) {
+        _assertClass(permutation, WASM_BlockType);
+        var ptr0 = permutation.__destroy_into_raw();
+        _assertClass(structure, WASM_MCStructure);
+        const ret = wasm.wasm_block_new(ptr0, index, structure.__wbg_ptr);
+        return WASM_Block.__wrap(ret);
     }
 }
+if (Symbol.dispose) WASM_Block.prototype[Symbol.dispose] = WASM_Block.prototype.free;
 
 const WASM_BlockTypeFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
@@ -297,10 +348,7 @@ export class WASM_MCStructure {
         const ptr0 = passArray32ToWasm0(size, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.wasm_mcstructure_new(ptr0, len0);
-        if (ret[2]) {
-            throw takeFromExternrefTable0(ret[1]);
-        }
-        return WASM_MCStructure.__wrap(ret[0]);
+        return WASM_MCStructure.__wrap(ret);
     }
     /**
      * @returns {Uint8Array}
@@ -314,6 +362,7 @@ export class WASM_MCStructure {
     /**
      * @param {Int32Array} loc
      * @param {WASM_BlockType} block
+     * @returns {WASM_Block}
      */
     setblock(loc, block) {
         const ptr0 = passArray32ToWasm0(loc, wasm.__wbindgen_malloc);
@@ -321,9 +370,10 @@ export class WASM_MCStructure {
         _assertClass(block, WASM_BlockType);
         var ptr1 = block.__destroy_into_raw();
         const ret = wasm.wasm_mcstructure_setblock(this.__wbg_ptr, ptr0, len0, ptr1);
-        if (ret[1]) {
-            throw takeFromExternrefTable0(ret[0]);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
         }
+        return WASM_Block.__wrap(ret[0]);
     }
 }
 if (Symbol.dispose) WASM_MCStructure.prototype[Symbol.dispose] = WASM_MCStructure.prototype.free;
