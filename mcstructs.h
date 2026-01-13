@@ -1,0 +1,3 @@
+typedef struct MCStructure {
+
+} MCStructure;
