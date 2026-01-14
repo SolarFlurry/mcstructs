@@ -5,15 +5,59 @@ use crate::{
     types::{Block, BlockState, BlockType, Vec3},
 };
 
+pub struct MCStructureIterator<'a> {
+    current: usize,
+    size: Vec3<i32>,
+    blocks: &'a [i32],
+    palette: &'a [BlockType],
+}
+
+impl<'a> Iterator for MCStructureIterator<'a> {
+    type Item = (Vec3<i32>, BlockType);
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current >= self.blocks.len() {
+            return None;
+        }
+        self.current += 1;
+        Some((
+            vec3_from_index(self.current - 1, self.size),
+            self.palette[self.blocks[self.current] as usize].clone(),
+        ))
+    }
+}
+
+fn vec3_from_index(index: usize, size: Vec3<i32>) -> Vec3<i32> {
+    Vec3::new(
+        index as i32 / size.z() / size.y(),
+        index as i32 / size.z() % size.y(),
+        index as i32 % size.z(),
+    )
+}
+
+fn index_from_vec3(loc: Vec3<i32>, size: Vec3<i32>) -> usize {
+    if loc.x() >= size.x() || loc.y() >= size.y() || loc.z() >= size.z() {
+        panic!("Location specified is out size bounds");
+    }
+    (size.z() * size.y() * loc.x() + size.z() * loc.y() + loc.z()) as usize
+}
+
 #[derive(Debug)]
 pub struct MCStructure {
-    pub(in crate) size: Vec3<i32>,
+    pub(crate) size: Vec3<i32>,
     blocks: Vec<i32>,
     palette: Vec<BlockType>,
-    pub(in crate) block_position_data: Vec<(u32, TagData)>
+    pub(crate) block_position_data: Vec<(u32, TagData)>,
 }
 
 impl MCStructure {
+    pub fn iter(&self) -> MCStructureIterator<'_> {
+        MCStructureIterator {
+            current: 0,
+            size: self.size,
+            blocks: &self.blocks,
+            palette: &self.palette,
+        }
+    }
     pub fn new(size: Vec3<i32>) -> MCStructure {
         let mut blocks: Vec<i32> = vec![];
         for _i in 0..(size.x() * size.y() * size.z()) {
@@ -23,15 +67,16 @@ impl MCStructure {
             size,
             blocks,
             palette: vec![],
-            block_position_data: vec![]
+            block_position_data: vec![],
         }
     }
+    pub fn getblock(&self, loc: Vec3<i32>) -> BlockType {
+        let index = index_from_vec3(loc, self.size);
+        self.palette[self.blocks[index] as usize].clone()
+    }
     pub fn setblock(&mut self, loc: Vec3<i32>, block: BlockType) -> Block<'_> {
-        if loc.x() >= self.size.x() || loc.y() >= self.size.y() || loc.z() >= self.size.z() {
-            panic!("Location specified is out of structure bounds");
-        }
-        let index = self.size.z() * self.size.y() * loc.x() + self.size.z() * loc.y() + loc.z();
-        self.blocks[index as usize] = self.palette.len() as i32;
+        let index = index_from_vec3(loc, self.size);
+        self.blocks[index] = self.palette.len() as i32;
         self.palette.push(block.clone());
         Block::new(block, index as u32, self)
     }
@@ -80,9 +125,12 @@ impl MCStructure {
                                 vec![TagData::Int(-1); self.blocks.len()],
                             ),
                         ],
-                    )
+                    ),
                 ),
-                ("entities".to_string(), TagData::List(TagKind::Compound, 0, vec![])),
+                (
+                    "entities".to_string(),
+                    TagData::List(TagKind::Compound, 0, vec![]),
+                ),
                 (
                     "palette".to_string(),
                     TagData::Compound(TagList::from(vec![(
@@ -107,22 +155,24 @@ impl MCStructure {
                                                         value
                                                             .states
                                                             .iter()
-                                                            .map(|state| (
-                                                                state.0.clone(),
-                                                                match &state.1 {
-                                                                    BlockState::String(string) => {
-                                                                        TagData::String(
+                                                            .map(|state| {
+                                                                (
+                                                                    state.0.clone(),
+                                                                    match &state.1 {
+                                                                        BlockState::String(
+                                                                            string,
+                                                                        ) => TagData::String(
                                                                             string.to_string(),
-                                                                        )
-                                                                    }
-                                                                    BlockState::Int(int) => {
-                                                                        TagData::Int(*int)
-                                                                    }
-                                                                    BlockState::Bool(b) => {
-                                                                        TagData::Byte(*b as i8)
-                                                                    }
-                                                                },
-                                                            ))
+                                                                        ),
+                                                                        BlockState::Int(int) => {
+                                                                            TagData::Int(*int)
+                                                                        }
+                                                                        BlockState::Bool(b) => {
+                                                                            TagData::Byte(*b as i8)
+                                                                        }
+                                                                    },
+                                                                )
+                                                            })
                                                             .collect(),
                                                     )),
                                                 ),
@@ -133,22 +183,28 @@ impl MCStructure {
                             ),
                             (
                                 "block_position_data".to_string(),
-                                TagData::Compound(TagList::from(self.block_position_data.iter().map(|value| {
-                                    println!("{}", value.0);
-                                    (
-                                    value.0.to_string(),
-                                    TagData::Compound(TagList::from(vec![(
-                                            "block_entity_data".to_string(),
-                                            value.1.clone()
-                                    )]))
-                                )}).collect())),
+                                TagData::Compound(TagList::from(
+                                    self.block_position_data
+                                        .iter()
+                                        .map(|value| {
+                                            println!("{}", value.0);
+                                            (
+                                                value.0.to_string(),
+                                                TagData::Compound(TagList::from(vec![(
+                                                    "block_entity_data".to_string(),
+                                                    value.1.clone(),
+                                                )])),
+                                            )
+                                        })
+                                        .collect(),
+                                )),
                             ),
                         ])),
                     )])),
                 ),
             ])),
         );
-        
+
         // structure_world_origin
         compound.add_tag(
             "structure_world_origin",
