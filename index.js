@@ -33,10 +33,15 @@ export class BlockType {
 
 export class MCStructure {
 	#state
+	#size
 	constructor (size) {
+		this.#size = size;
 		this.#state = mcstructs.WASM_MCStructure.new(size._int32array())
 	}
 	setBlock(loc, block) {
+		if (loc.x >= this.#size.x || loc.y >= this.#size.y || loc.z >= this.#size.z) {
+        throw new Error(`setBlock location out of bounds. Location ${[loc.x, loc.y, loc.z]}), Size ${[this.#size.x, this.#size.y, this.#size.z]}`)
+    }
 		return new Block(this.#state.setblock(loc._int32array(), block._getInternalState()));
 	}
 	asBytes() {
