@@ -1,6 +1,6 @@
 use crate::{
     nbt::{TagData, TagKind, TagList},
-    structure::MCStructure,
+    structure::{MCStructure, vec3_from_index},
 };
 
 use serde::{Deserialize, Serialize};
@@ -65,7 +65,7 @@ impl BlockType {
 pub struct Block<'a> {
     permutation: BlockType,
     structure: &'a mut MCStructure,
-    pub(in crate) index: u32,
+    pub(crate) index: u32,
 }
 
 pub(crate) fn set_item_slot_of_block(
@@ -86,33 +86,41 @@ pub(crate) fn set_item_slot_of_block(
             break;
         }
     }
-	if let None = index_in_data {
-		index_in_data = Some(structure.block_position_data.len());
-		structure.block_position_data.push((index, TagData::Compound(TagList::new())))
-	}
-    if let Some(index_in_data) = index_in_data {
-        let actual_data = &mut structure.block_position_data[index_in_data].1;
-        let items: &mut TagData;
-        if let Some(get) = actual_data.get_tag("Items") {
-            items = get;
-        } else {
-            actual_data.add_tag("Items", TagData::List(TagKind::Compound, 0, vec![]));
-            items = actual_data.get_tag("Items").expect("unreachable code");
-        }
-
-        if let TagData::List(_kind, size, list) = items {
-            list.push(TagData::Compound(TagList::from(vec![
-                ("Count".to_string(), TagData::Byte(count as i8)),
+    if let None = index_in_data {
+        index_in_data = Some(structure.block_position_data.len());
+        let position = vec3_from_index(index as usize, structure.size);
+        structure.block_position_data.push((
+            index,
+            TagData::Compound(TagList::from(vec![
                 (
-                    "Name".to_string(),
-                    TagData::String(item_type_id.to_string()),
+                    "Items".to_string(),
+                    TagData::List(TagKind::Compound, 0, vec![]),
                 ),
-                ("Slot".to_string(), TagData::Byte(slot as i8)),
-            ])));
-            *size += 1;
-        }
-    } else {
-        panic!("unreachable code")
+                ("id".to_string(), TagData::String("Barrel".to_string())),
+                ("x".to_string(), TagData::Int(*position.x())),
+                ("y".to_string(), TagData::Int(*position.y())),
+                ("z".to_string(), TagData::Int(*position.z())),
+            ])),
+        ))
+    }
+    let Some(index_in_data) = index_in_data else {
+        panic!("unreachable code");
+    };
+    let actual_data = &mut structure.block_position_data[index_in_data].1;
+    let Some(items) = actual_data.get_tag("Items") else {
+        panic!("unreachable");
+    };
+
+    if let TagData::List(_kind, size, list) = items {
+        list.push(TagData::Compound(TagList::from(vec![
+            ("Count".to_string(), TagData::Byte(count as i8)),
+            (
+                "Name".to_string(),
+                TagData::String(item_type_id.to_string()),
+            ),
+            ("Slot".to_string(), TagData::Byte(slot as i8)),
+        ])));
+        *size += 1;
     }
 }
 

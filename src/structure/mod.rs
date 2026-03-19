@@ -26,7 +26,7 @@ impl<'a> Iterator for MCStructureIterator<'a> {
     }
 }
 
-fn vec3_from_index(index: usize, size: Vec3<i32>) -> Vec3<i32> {
+pub fn vec3_from_index(index: usize, size: Vec3<i32>) -> Vec3<i32> {
     Vec3::new(
         index as i32 / size.z() / size.y(),
         index as i32 / size.z() % size.y(),
@@ -34,9 +34,17 @@ fn vec3_from_index(index: usize, size: Vec3<i32>) -> Vec3<i32> {
     )
 }
 
-fn index_from_vec3(loc: Vec3<i32>, size: Vec3<i32>) -> usize {
+pub fn index_from_vec3(loc: Vec3<i32>, size: Vec3<i32>) -> usize {
     if loc.x() >= size.x() || loc.y() >= size.y() || loc.z() >= size.z() {
-        panic!("Location specified is out size bounds");
+        panic!(
+            "Location ({}, {}, {}) specified is out of size bounds ({}, {}, {})",
+            loc.x(),
+            loc.y(),
+            loc.z(),
+            size.x(),
+            size.y(),
+            size.z()
+        );
     }
     (size.z() * size.y() * loc.x() + size.z() * loc.y() + loc.z()) as usize
 }
@@ -187,7 +195,6 @@ impl MCStructure {
                                     self.block_position_data
                                         .iter()
                                         .map(|value| {
-                                            println!("{}", value.0);
                                             (
                                                 value.0.to_string(),
                                                 TagData::Compound(TagList::from(vec![(
