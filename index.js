@@ -45,7 +45,7 @@ export class MCStructure {
 		return new Block(this.#state.setblock(loc._int32array(), block._getInternalState()));
 	}
 	paletteAdd(block) {
-		return this.#state.palette_add(block);
+		return this.#state.palette_add(block._getInternalState());
 	}
 	setBlockPalette(loc, palette_block) {
 		return this.#state.setblock_palette(loc._int32array(), palette_block);
