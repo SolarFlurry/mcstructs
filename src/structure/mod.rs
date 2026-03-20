@@ -88,6 +88,15 @@ impl MCStructure {
         self.palette.push(block.clone());
         Block::new(block, index as u32, self)
     }
+    pub fn palette_add(&mut self, block: BlockType) -> i32 {
+        self.palette.push(block);
+        return (self.palette.len() - 1) as i32;
+    }
+    pub fn setblock_palette(&mut self, loc: Vec3<i32>, palette_block: i32) -> Block<'_> {
+        let index = index_from_vec3(loc, self.size);
+        self.blocks[index] = palette_block;
+        Block::new(self.palette[palette_block as usize].clone(), index as u32, self)
+    }
 
     pub fn as_bytes(&self) -> Vec<u8> {
         let mut compound = TagData::Compound(TagList::new());

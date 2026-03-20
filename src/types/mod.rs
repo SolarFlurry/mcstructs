@@ -92,11 +92,13 @@ pub(crate) fn set_item_slot_of_block(
         structure.block_position_data.push((
             index,
             TagData::Compound(TagList::from(vec![
+                ("Findable".to_string(), TagData::Byte(0)),
                 (
                     "Items".to_string(),
                     TagData::List(TagKind::Compound, 0, vec![]),
                 ),
                 ("id".to_string(), TagData::String("Barrel".to_string())),
+                ("isMovable".to_string(), TagData::Byte(1)),
                 ("x".to_string(), TagData::Int(*position.x())),
                 ("y".to_string(), TagData::Int(*position.y())),
                 ("z".to_string(), TagData::Int(*position.z())),
@@ -114,11 +116,13 @@ pub(crate) fn set_item_slot_of_block(
     if let TagData::List(_kind, size, list) = items {
         list.push(TagData::Compound(TagList::from(vec![
             ("Count".to_string(), TagData::Byte(count as i8)),
+            ("Damage".to_string(), TagData::Short(0)),
             (
                 "Name".to_string(),
                 TagData::String(item_type_id.to_string()),
             ),
             ("Slot".to_string(), TagData::Byte(slot as i8)),
+            ("WasPickedUp".to_string(), TagData::Byte(0)),
         ])));
         *size += 1;
     }
