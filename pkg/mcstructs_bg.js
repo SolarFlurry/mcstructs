@@ -341,6 +341,30 @@ export class WASM_MCStructure {
         wasm.__wbg_wasm_mcstructure_free(ptr, 0);
     }
     /**
+     * @param {WASM_BlockType} block
+     * @returns {number}
+     */
+    palette_add(block) {
+        _assertClass(block, WASM_BlockType);
+        var ptr0 = block.__destroy_into_raw();
+        const ret = wasm.wasm_mcstructure_palette_add(this.__wbg_ptr, ptr0);
+        return ret;
+    }
+    /**
+     * @param {Int32Array} loc
+     * @param {number} palette_block
+     * @returns {WASM_Block}
+     */
+    setblock_palette(loc, palette_block) {
+        const ptr0 = passArray32ToWasm0(loc, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasm_mcstructure_setblock_palette(this.__wbg_ptr, ptr0, len0, palette_block);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return WASM_Block.__wrap(ret[0]);
+    }
+    /**
      * @param {Int32Array} size
      * @returns {WASM_MCStructure}
      */

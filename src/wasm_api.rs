@@ -55,6 +55,20 @@ impl WASM_MCStructure {
             self,
         ))
     }
+    pub fn palette_add(&mut self, block: WASM_BlockType) -> i32 {
+        self.mcstructure.borrow_mut().palette_add(block.blocktype.clone().expect("unreachable code"))
+    }
+    pub fn setblock_palette(&mut self, loc: &[i32], palette_block: i32) -> Result<WASM_Block, JsValue> {
+        let loc = vec3_from_slice(loc);
+        self.mcstructure.borrow_mut().setblock_palette(loc, palette_block);
+        Ok(WASM_Block::new(
+            WASM_BlockType::from(self.mcstructure.borrow().palette[palette_block as usize].clone()),
+            (self.mcstructure.borrow().size.z() * self.mcstructure.borrow().size.y() * loc.x()
+                + self.mcstructure.borrow().size.z() * loc.y()
+                + loc.z()) as u32,
+            self,
+        ))
+    }
     pub fn as_bytes(&self) -> Vec<u8> {
         self.mcstructure.borrow().as_bytes()
     }
@@ -82,6 +96,14 @@ impl WASM_BlockType {
         self.blocktype = Some(inner.set_state(state_name, &state));
 
         Ok(())
+    }
+}
+
+impl From<BlockType> for WASM_BlockType {
+    fn from(blocktype: BlockType) -> Self {
+        WASM_BlockType {
+            blocktype: Some(blocktype)
+        }
     }
 }
 

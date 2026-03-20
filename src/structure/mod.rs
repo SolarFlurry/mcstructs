@@ -53,7 +53,7 @@ pub fn index_from_vec3(loc: Vec3<i32>, size: Vec3<i32>) -> usize {
 pub struct MCStructure {
     pub(crate) size: Vec3<i32>,
     blocks: Vec<i32>,
-    palette: Vec<BlockType>,
+    pub(crate) palette: Vec<BlockType>,
     pub(crate) block_position_data: Vec<(u32, TagData)>,
 }
 

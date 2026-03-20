@@ -18,6 +18,8 @@ export class WASM_MCStructure {
   private constructor();
   free(): void;
   [Symbol.dispose](): void;
+  palette_add(block: WASM_BlockType): number;
+  setblock_palette(loc: Int32Array, palette_block: number): WASM_Block;
   static new(size: Int32Array): WASM_MCStructure;
   as_bytes(): Uint8Array;
   setblock(loc: Int32Array, block: WASM_BlockType): WASM_Block;

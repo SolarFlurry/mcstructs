@@ -40,9 +40,15 @@ export class MCStructure {
 	}
 	setBlock(loc, block) {
 		if (loc.x >= this.#size.x || loc.y >= this.#size.y || loc.z >= this.#size.z) {
-        throw new Error(`setBlock location out of bounds. Location ${[loc.x, loc.y, loc.z]}), Size ${[this.#size.x, this.#size.y, this.#size.z]}`)
-    }
+			throw new Error(`setBlock location out of bounds. Location ${[loc.x, loc.y, loc.z]}), Size ${[this.#size.x, this.#size.y, this.#size.z]}`)
+		}
 		return new Block(this.#state.setblock(loc._int32array(), block._getInternalState()));
+	}
+	paletteAdd(block) {
+		return this.#state.palette_add(block);
+	}
+	setBlockPalette(loc, palette_block) {
+		return this.#state.setblock_palette(loc._int32array(), palette_block);
 	}
 	asBytes() {
 		return this.#state.as_bytes()

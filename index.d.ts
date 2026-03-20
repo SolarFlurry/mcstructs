@@ -13,12 +13,14 @@ export class BlockType {
 export class MCStructure {
 	constructor(size: Vec3);
 	setBlock(loc: Vec3, block: BlockType): Block;
+	setBlockPalette(loc: Vec3, palette_block: number): Block;
+	paletteAdd(block: BlockType): number;
 	asBytes(): Int8Array;
 }
 
-class Block {
+export class Block {
 	private constructor();
-	setItemSlot(slot: number, itemTypeId: string, count: number);
+	setItemSlot(slot: number, itemTypeId: string, count: number): Block;
 }
 
 export class BlockState {
